@@ -17,45 +17,45 @@ read -p $'\e[33;1mEnter Shodan API key: \e[0m' SHODAN_API
 BASE=$(echo "$DOMAIN" | cut -d '.' -f1)
 
 # Create folder structure
-mkdir -p "${BASE}/recon/sub_enum/dump"
+RECON_DIR="${BASE}/recon/sub_enum"
+DUMP_DIR="${RECON_DIR}/dump"
+mkdir -p "$DUMP_DIR"
 echo "$DOMAIN" > "${BASE}/scope.txt"
 
-# Output file
-COMMANDS_FILE="commands.txt"
+echo -e "${BLUE}${BOLD}[*] Starting Recon Automation...${NC}"
 
-# Save colored commands to file
-{
-  printf "${BLUE}${BOLD}# Wide Recon${NC}\n"
-  printf "${GREEN}## Subdomain Enumeration${NC}\n"
+# Subfinder
+echo -e "${YELLOW}[+] Running Subfinder...${NC}"
+subfinder -d "$DOMAIN" -all -recursive -silent -o "$DUMP_DIR/subs.txt"
 
-  printf "${YELLOW}### Using Subfinder${NC}\n"
-  printf "subfinder -d $DOMAIN -all -recursive -silent -o ${BASE}/recon/sub_enum/dump/subs.txt\n\n"
+# github-subdomains
+echo -e "${YELLOW}[+] Running github-subdomains...${NC}"
+github-subdomains -d "$DOMAIN" -o "$DUMP_DIR/git_subs.txt" -t "$GH_API"
 
-  printf "${YELLOW}### Using github-subdomains${NC}\n"
-  printf "github-subdomains -d $DOMAIN -o ${BASE}/recon/sub_enum/dump/git_subs.txt -t $GH_API\n\n"
+# Shosubgo
+echo -e "${YELLOW}[+] Running shosubgo...${NC}"
+shosubgo -s "$SHODAN_API" -d "$DOMAIN" -o "$DUMP_DIR/shosubgo_subs.txt"
 
-  printf "${YELLOW}### Using Shosubgo${NC}\n"
-  printf "shosubgo -s $SHODAN_API -d $DOMAIN -o ${BASE}/recon/sub_enum/dump/shosubgo_subs.txt\n\n"
+# Gather unique
+echo -e "${GREEN}[+] Gathering unique subdomains...${NC}"
+cat "$DUMP_DIR/subs.txt" "$DUMP_DIR/git_subs.txt" "$DUMP_DIR/shosubgo_subs.txt" | anew > "$DUMP_DIR/all_uniq_subs.txt"
 
-  printf "${GREEN}## Gather Unique Subdomains${NC}\n"
-  printf "cat ${BASE}/recon/sub_enum/dump/subs.txt "
-  printf "${BASE}/recon/sub_enum/dump/git_subs.txt "
-  printf "${BASE}/recon/sub_enum/dump/shosubgo_subs.txt | anew > ${BASE}/recon/sub_enum/dump/all_uniq_subs.txt\n\n"
+# Alive check
+echo -e "${BLUE}[+] Probing for live subdomains... (200 OK)${NC}"
+cat "$DUMP_DIR/all_uniq_subs.txt" | httpx-toolkit -ports 80,443,8080,8000,8888,8443,3000 -o "$DUMP_DIR/alive_subs.txt" -mc 200 -t 150
 
-  printf "${GREEN}## Check Alive Subdomains${NC}\n"
-  printf "cat ${BASE}/recon/sub_enum/dump/all_uniq_subs.txt | httpx-toolkit -ports 80,443,8080,8000,8888,8443,3000 -o ${BASE}/recon/sub_enum/dump/alive_subs.txt -mc 200 -t 150\n"
-  printf "cat ${BASE}/recon/sub_enum/dump/all_uniq_subs.txt | httpx-toolkit -ports 80,443,8080,8000,8888,8443,3000 -o ${BASE}/recon/sub_enum/dump/redir_subs.txt -mc 302 -t 150\n\n"
+echo -e "${BLUE}[+] Probing for redirected subdomains... (302)${NC}"
+cat "$DUMP_DIR/all_uniq_subs.txt" | httpx-toolkit -ports 80,443,8080,8000,8888,8443,3000 -o "$DUMP_DIR/redir_subs.txt" -mc 302 -t 150
 
-  printf "${GREEN}## Clean Output (remove protocols, deduplicate)${NC}\n"
-  printf "cat ${BASE}/recon/sub_enum/dump/alive_subs.txt | sed 's|http[s]*://||' | sort -u > ${BASE}/recon/sub_enum/alive_subs.txt\n"
-  printf "cat ${BASE}/recon/sub_enum/dump/redir_subs.txt | sed 's|http[s]*://||' | sort -u > ${BASE}/recon/sub_enum/redir_subs.txt\n"
-  printf "cat ${BASE}/recon/sub_enum/alive_subs.txt ${BASE}/recon/sub_enum/redir_subs.txt | anew > ${BASE}/recon/sub_enum/combined.txt\n\n"
+# Clean and deduplicate
+echo -e "${YELLOW}[+] Cleaning and removing protocols...${NC}"
+cat "$DUMP_DIR/alive_subs.txt" | sed 's|http[s]*://||' | sort -u > "$RECON_DIR/alive_subs.txt"
+cat "$DUMP_DIR/redir_subs.txt" | sed 's|http[s]*://||' | sort -u > "$RECON_DIR/redir_subs.txt"
 
-  printf "${BLUE}bbot -t $DOMAIN -p subdomain-enum -o . -n bbot_results -om txt${NC}\n\n"
+# Combined output
+cat "$RECON_DIR/alive_subs.txt" "$RECON_DIR/redir_subs.txt" | anew > "$RECON_DIR/combined.txt"
 
-  printf "${GREEN}${BOLD}✅ Subdomain enumeration is done.${NC}\n"
-  printf "${YELLOW}You can go with these results for hunting but don't forget to use bbot for more results and findings.${NC}\n"
-} > "$COMMANDS_FILE"
-
-# Show output to terminal
-cat "$COMMANDS_FILE"
+# Done
+echo -e "\n${GREEN}${BOLD}✅ Subdomain enumeration is done.${NC}"
+echo -e "${YELLOW}You can go with these results for hunting but don't forget to use bbot for more results and findings.${NC}"
+echo -e "${BLUE}Hint: bbot -t $DOMAIN -p subdomain-enum -o . -n bbot_results -om txt${NC}"
