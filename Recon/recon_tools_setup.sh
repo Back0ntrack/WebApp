@@ -43,6 +43,7 @@ tools=(
   paramspider
   arjun
   finalrecon
+  httpx-toolkit
 )
 
 # Install all tools
