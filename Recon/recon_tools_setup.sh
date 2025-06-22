@@ -44,6 +44,8 @@ tools=(
   arjun
   finalrecon
   httpx-toolkit
+  toilet
+  figlet
 )
 
 # Install all tools
@@ -329,5 +331,7 @@ else
   echo -e "${GREEN}✅ coffinxp_scripts already exists in /opt${NC}"
 fi
 
+pipx install uro
+pipx ensurepath
 echo -e "${GREEN}🎉 All tasks complete!${NC}"
 
