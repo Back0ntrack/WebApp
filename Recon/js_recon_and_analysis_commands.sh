@@ -54,7 +54,7 @@ COMMANDS_FILE="js_commands.txt"
   echo -e "${MAGENTA}────────────────────────────────────────────────────────────────────${NC}"
   echo -e "${CYAN}▶ nuclei -l ${BASE}/recon/js_enum/target_js_urls.txt -t ~/.local/nuclei-templates/http/exposures -c 30${NC}"
   echo -e "${MAGENTA}────────────────────────────────────────────────────────────────────${NC}"
-  echo -e "${CYAN}▶ cat js.txt | nuclei -t ~/.local/nuclei-templates/coffinxp_nuclei_templates/credentials-disclosure-all.yaml -c 30${NC}"
+  echo -e "${CYAN}▶ cat ${BASE}/recon/js_enum/target_js_urls.txt | nuclei -t ~/.local/nuclei-templates/coffinxp_nuclei_templates/credentials-disclosure-all.yaml -c 30${NC}"
 
   toilet -F border -f term "Optional Extra Tools" | lolcat --force -p 0.2
 
@@ -69,4 +69,18 @@ COMMANDS_FILE="js_commands.txt"
   echo -e "\n${GREEN}${BOLD}✅ JS Recon & Analysis completed.${NC}"
   echo -e "${YELLOW}You now have filtered URLs and JS files. You can start hunting or analyze leaks manually.${NC}"
 
+    toilet -F border -f term "Crawling Juicy Endpoints" | lolcat --force -p 0.2
+
+  echo -e "${CYAN}▶ grep -Ei '/(admin|config|dashboard|login|auth|debug|test|staging|upload|backup|server-status|monitor|manage|dev|portal|private|panel|root|internal|console|cgi-bin|shell|setup|editor|password|credentials|db|database|env|hidden|system|account|superuser|core|includes|wp-admin|webadmin|cpanel|git|svn|api|v1|v2|token|key|secret|jwt|session|logs|error|secure|restricted|flag)(/|$)' ${BASE}/recon/js_enum/target_url_list.txt | sort -u > ${BASE}/recon/js_enum/juicy_urls.txt${NC}"
+
+  echo -e "${MAGENTA}────────────────────────────────────────────────────────────────────${NC}"
+
+  echo -e "${CYAN}▶ katana -u https://www.${DOMAIN} -d 5 -mdc 'contains(endpoint,\"api\")' -jc -jsl -kf all -o ${BASE}/recon/js_enum/dump/api_endpoints.txt${NC}"
+
+  echo -e "${MAGENTA}────────────────────────────────────────────────────────────────────${NC}"
+
+  echo -e "${CYAN}▶ cat ${BASE}/recon/js_enum/dump/api_endpoints.txt | uro | sort -u | httpx-toolkit -mc 200 -t 150 -o ${BASE}/recon/js_enum/juicy_api_endpoints.txt${NC}"
+
+
 } | tee "$COMMANDS_FILE"
+
