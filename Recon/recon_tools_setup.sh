@@ -81,7 +81,8 @@ install_go_tool() {
   gobin="/root/go/bin/$toolname"
 
   if [[ ! -d "/root/go/bin" ]]; then
-    echo -e "${RED}❌ /root/go/bin does not exist. Is Go properly installed for root user?${NC}"
+    echo -e "${RED}❌ /root/go/bin does not exist. We're creating one for you.${NC}"
+    mkdir -p /root/go/bin
     return
   fi
 
