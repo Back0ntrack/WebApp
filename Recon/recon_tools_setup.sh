@@ -46,6 +46,7 @@ tools=(
   httpx-toolkit
   toilet
   figlet
+  lolcat
 )
 
 # Install all tools
