@@ -27,7 +27,7 @@ COMMANDS_FILE="commands.txt"
 
 # Save colored commands to file and terminal
 {
-  toilet -f digital 'JS recon & Analysis' | lolcat --force -p 1
+  toilet -f digital 'Wide Recon' | lolcat --force -p 1
 
   toilet -F border -f term "Subdomain Enumeration" | lolcat --force -p 0.2
 
