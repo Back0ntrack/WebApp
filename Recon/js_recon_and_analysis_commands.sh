@@ -36,14 +36,16 @@ COMMANDS_FILE="js_commands.txt"
 
   toilet -F border -f term "URL Collection" | lolcat --force -p 0.2
 
-  echo -e "${CYAN}▶ echo 'https://www.${DOMAIN}' | hakrawler -d 3 --subs -t 30 | grep '^https://[^/]*\\.${BASE}\\.com' | anew ${BASE}/recon/js_enum/dump/all_urls.txt${NC}"
+  echo -e "${CYAN}▶ echo 'https://www.${DOMAIN}' | hakrawler -d 3 --subs -t 30 | grep '^https://[^/]*\\.${BASE}\\.com' > ${BASE}/recon/js_enum/dump/hakrawler_urls.txt${NC}"
   echo -e "${MAGENTA}────────────────────────────────────────────────────────────────────${NC}"
-  echo -e "${CYAN}▶ katana -list ${COMBINED_PATH} -d 5 -jc -jsl -c 30 | grep '^https://[^/]*\\.${BASE}\\.com' | anew ${BASE}/recon/js_enum/dump/all_urls.txt${NC}"
+  echo -e "${CYAN}▶ katana -list ${COMBINED_PATH} -d 5 -jc -jsl -c 30 | grep '^https://[^/]*\\.${BASE}\\.com' > ${BASE}/recon/js_enum/dump/katana_urls.txt${NC}"
   echo -e "${MAGENTA}────────────────────────────────────────────────────────────────────${NC}"
-  echo -e "${CYAN}▶ waybackurls '${DOMAIN}' | grep '^https://[^/]*\\.${BASE}\\.com' | anew ${BASE}/recon/js_enum/dump/all_urls.txt${NC}"
+  echo -e "${CYAN}▶ waybackurls '${DOMAIN}' | grep '^https://[^/]*\\.${BASE}\\.com' > ${BASE}/recon/js_enum/dump/wayback_urls.txt${NC}"
 
   toilet -F border -f term "Filter JS & Alive URLs" | lolcat --force -p 0.2
 
+  echo -e "${CYAN}▶ cat ${BASE}/recon/js_enum/dump/wayback_urls.txt ${BASE}/recon/js_enum/dump/hakrawler_urls.txt ${BASE}/recon/js_enum/dump/katana_urls.txt | anew ${BASE}/recon/js_enum/dump/all_urls.txt"
+  echo -e "${MAGENTA}────────────────────────────────────────────────────────────────────${NC}"
   echo -e "${CYAN}▶ cat ${BASE}/recon/js_enum/dump/all_urls.txt | grep '\\.js\$' | uro | sort -u | httpx-toolkit -mc 200 -t 150 -o ${BASE}/recon/js_enum/target_js_urls.txt${NC}"
   echo -e "${MAGENTA}────────────────────────────────────────────────────────────────────${NC}"
   echo -e "${CYAN}▶ cat ${BASE}/recon/js_enum/dump/all_urls.txt | uro | sort -u | httpx-toolkit -mc 200,302 -t 150 -o ${BASE}/recon/js_enum/target_url_list.txt${NC}"
