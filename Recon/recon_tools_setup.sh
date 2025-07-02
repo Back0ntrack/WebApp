@@ -333,6 +333,53 @@ else
   echo -e "${GREEN}✅ coffinxp_scripts already exists in /opt${NC}"
 fi
 
+#!/bin/bash
+
+# Check if gf is installed
+if ! command -v gf &> /dev/null; then
+    echo "[*] gf not found. Installing..."
+    go install github.com/tomnomnom/gf@latest
+
+    # Symlink gf binary to /usr/local/bin
+    GOBIN=$(go env GOBIN)
+    [ -z "$GOBIN" ] && GOBIN="$HOME/go/bin"
+    if [ -f "$GOBIN/gf" ]; then
+        sudo ln -sf "$GOBIN/gf" /usr/local/bin/gf
+        echo "[*] gf symlinked to /usr/local/bin"
+    else
+        echo "[!] gf binary not found after installation. Check Go setup."
+        exit 1
+    fi
+else
+    echo "[*] gf is already installed."
+fi
+
+# Check if ~/.gf exists
+if [ -d "$HOME/.gf" ]; then
+    read -p "[?] ~/.gf already exists. Do you want to delete and replace it with GFPatterns? (y/n): " confirm
+    if [[ "$confirm" == "y" || "$confirm" == "Y" ]]; then
+        rm -rf "$HOME/.gf"
+        mkdir -p "$HOME/.gf"
+    else
+        echo "[!] Aborting pattern installation. ~/.gf preserved."
+        exit 1
+    fi
+else
+    mkdir -p "$HOME/.gf"
+fi
+
+# Clone GFPatterns
+if [ ! -d /opt/GFPatterns ]; then
+    sudo git clone https://github.com/coffinxp/GFpattren /opt/GFPatterns
+else
+    echo "[*] /opt/GFPatterns already exists. Skipping clone."
+fi
+
+# Copy patterns
+cp /opt/GFPatterns/*.json "$HOME/.gf/"
+
+echo "[✔] GF Installed successfully with patterns."
+
 pipx install uro
 pipx ensurepath
 echo -e "${GREEN}🎉 All tasks complete!${NC}"
