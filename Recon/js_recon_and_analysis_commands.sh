@@ -36,15 +36,24 @@ COMMANDS_FILE="js_commands.txt"
 
   toilet -F border -f term "URL Collection" | lolcat --force -p 0.2
 
+  echo -e "${CYAN}▶ echo '${DOMAIN}' | gau | grep '^https://[^/]*\\.${BASE}\\.com' > ${BASE}/recon/js_enum/dump/gau_urls.txt${NC}"
+  echo -e "${MAGENTA}────────────────────────────────────────────────────────────────────${NC}"
+  
   echo -e "${CYAN}▶ echo 'https://www.${DOMAIN}' | hakrawler -d 3 --subs -t 30 | grep '^https://[^/]*\\.${BASE}\\.com' > ${BASE}/recon/js_enum/dump/hakrawler_urls.txt${NC}"
   echo -e "${MAGENTA}────────────────────────────────────────────────────────────────────${NC}"
+  
   echo -e "${CYAN}▶ katana -list ${COMBINED_PATH} -d 5 -jc -jsl -c 30 | grep '^https://[^/]*\\.${BASE}\\.com' > ${BASE}/recon/js_enum/dump/katana_urls.txt${NC}"
   echo -e "${MAGENTA}────────────────────────────────────────────────────────────────────${NC}"
+  
+  echo -e "${CYAN}▶ paramspider -d '${DOMAIN}' -p -s > ${BASE}/recon/js_enum/dump/paramspider_urls.txt${NC}"
+  echo -e "${MAGENTA}────────────────────────────────────────────────────────────────────${NC}"
+
   echo -e "${CYAN}▶ waybackurls '${DOMAIN}' | grep '^https://[^/]*\\.${BASE}\\.com' > ${BASE}/recon/js_enum/dump/wayback_urls.txt${NC}"
+
 
   toilet -F border -f term "Filter JS & Alive URLs" | lolcat --force -p 0.2
 
-  echo -e "${CYAN}▶ cat ${BASE}/recon/js_enum/dump/wayback_urls.txt ${BASE}/recon/js_enum/dump/hakrawler_urls.txt ${BASE}/recon/js_enum/dump/katana_urls.txt | anew ${BASE}/recon/js_enum/dump/all_urls.txt"
+  echo -e "${CYAN}▶ cat ${BASE}/recon/js_enum/dump/gau_urls.txt ${BASE}/recon/js_enum/dump/hakrawler_urls.txt ${BASE}/recon/js_enum/dump/katana_urls.txt ${BASE}/recon/js_enum/dump/wayback_urls.txt ${BASE}/recon/js_enum/dump/paramspider_urls.txt | sort | anew > ${BASE}/recon/js_enum/dump/all_urls.txt${NC}"
   echo -e "${MAGENTA}────────────────────────────────────────────────────────────────────${NC}"
   echo -e "${CYAN}▶ cat ${BASE}/recon/js_enum/dump/all_urls.txt | grep '\\.js\$' | uro | sort -u | httpx-toolkit -mc 200 -t 150 -o ${BASE}/recon/js_enum/target_js_urls.txt${NC}"
   echo -e "${MAGENTA}────────────────────────────────────────────────────────────────────${NC}"
@@ -57,12 +66,6 @@ COMMANDS_FILE="js_commands.txt"
   echo -e "${CYAN}▶ nuclei -l ${BASE}/recon/js_enum/target_js_urls.txt -t ~/.local/nuclei-templates/http/exposures -c 30${NC}"
   echo -e "${MAGENTA}────────────────────────────────────────────────────────────────────${NC}"
   echo -e "${CYAN}▶ cat ${BASE}/recon/js_enum/target_js_urls.txt | nuclei -t ~/.local/nuclei-templates/coffinxp_nuclei_templates/credentials-disclosure-all.yaml -c 30${NC}"
-
-  toilet -F border -f term "Optional Extra Tools" | lolcat --force -p 0.2
-
-  echo -e "${CYAN}▶ echo '${DOMAIN}' | gau | grep '^https://[^/]*\\.${BASE}\\.com' | anew ${BASE}/recon/js_enum/dump/urls.txt${NC}"
-  echo -e "${CYAN}▶ cat ${BASE}/recon/js_enum/dump/urls.txt | anew ${BASE}/recon/js_enum/target_url_list.txt${NC}"
-  echo -e "${YELLOW}💡 If any new JS URLs are found, restart the JS analysis phase for them.${NC}"
 
   echo -e "${MAGENTA}────────────────────────────────────────────────────────────────────${NC}"
   echo -e "${CYAN}▶ cat ${BASE}/recon/js_enum/target_js_urls.txt | xargs -I{} bash -c 'echo -e \"\\ntarget : {}\\n\" && lazyegg \"{}\" --js_urls --domains --ips --leaked_creds --local_storage'${NC}"
