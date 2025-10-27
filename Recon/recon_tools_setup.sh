@@ -7,6 +7,8 @@ YELLOW="\e[33m"
 BLUE="\e[34m"
 NC="\e[0m"  # No color
 
+set -euo pipefail
+
 # Check root
 if [[ $EUID -ne 0 ]]; then
   echo -e "${RED}❌ Please run this script as root!${NC}"
@@ -16,7 +18,7 @@ fi
 # Function to install golang-go
 if ! command -v go &> /dev/null; then
 	echo -e "${YELLOW}🔧 Installing Golang-Go...${NC}"
-	sudo apt install golang-go -y &> /dev/null
+	apt install golang-go -y &> /dev/null
 	if command -v "go" &> /dev/null; then
 	       echo -e "${GREEN}✅ Golang-Go Installed!${NC}"
        else
@@ -44,8 +46,11 @@ check_and_install() {
 
 # Tools list
 tools=(
+  findomain
+  jq
   dnsrecon
   theHarvester
+  seclists
   subfinder
   dnsenum
   ffuf
@@ -250,30 +255,6 @@ else
   echo -e "${GREEN}✅ Virtual environment already exists.${NC}"
 fi
 
-# Activate venv and install requirements
-echo -e "${YELLOW}📦 Installing requirements.txt into venv...${NC}"
-/opt/linkfinder/venv/bin/pip install --upgrade pip &> /dev/null
-/opt/linkfinder/venv/bin/pip install -r /opt/linkfinder/requirements.txt --break-system-packages
-
-# Install LinkFinder using setup.py inside venv
-echo -e "${YELLOW}⚙️  Installing LinkFinder with setup.py...${NC}"
-cd /opt/linkfinder
-/opt/linkfinder/venv/bin/python setup.py install
-
-# Create launcher script
-cat << 'EOF' > /opt/linkfinder/main.sh
-#!/bin/bash
-cd /opt/linkfinder
-source venv/bin/activate
-python3 linkfinder.py "$@"
-EOF
-
-chmod +x /opt/linkfinder/main.sh
-
-# Symlink to /usr/bin
-ln -sf /opt/linkfinder/main.sh /usr/bin/linkfinder
-echo -e "${GREEN}🔗 Symlinked LinkFinder launcher to /usr/bin/linkfinder${NC}"
-
 # Clone the repo if not already present
 if [[ ! -d "/opt/4-ZERO-3" ]]; then
   echo -e "${YELLOW}📥 Cloning 4-ZERO-3 repository...${NC}"
@@ -394,4 +375,73 @@ echo "[✔] GF Installed successfully with patterns."
 
 pipx install uro
 pipx ensurepath
+
+# ---------- DIRECTORY ----------
+WORDLIST_DIR="/opt/wordlists"
+
+echo -e "${BLUE}[*] Checking /opt/wordlists directory...${NC}"
+if [ ! -d "$WORDLIST_DIR" ]; then
+    echo -e "${YELLOW}[!] Directory not found. Creating $WORDLIST_DIR...${NC}"
+    sudo mkdir -p "$WORDLIST_DIR"
+    echo -e "${GREEN}[+] Created $WORDLIST_DIR${NC}"
+else
+    echo -e "${GREEN}[+] Directory exists: $WORDLIST_DIR${NC}"
+fi
+
+cd "$WORDLIST_DIR"
+
+# ---------- REPOSITORIES ----------
+declare -A repos=(
+    ["n0kovo_subdomains"]="https://github.com/n0kovo/n0kovo_subdomains.git"
+    ["Karanxa_BugBounty"]="https://github.com/Karanxa/Bug-Bounty-Wordlists.git"
+    ["orwagodfather_Wordlist"]="https://github.com/orwagodfather/Wordlist.git"
+    ["1BlackLine_Payloads"]="https://github.com/1BlackLine/Payloads.git"
+    ["HacktivistRO_BugBounty"]="https://github.com/HacktivistRO/Bug-Bounty-Wordlists.git"
+)
+
+# ---------- CLONE FUNCTION ----------
+install_repo() {
+    local name="$1"
+    local url="$2"
+
+    if [ -d "$WORDLIST_DIR/$name" ]; then
+        echo -e "${GREEN}[+] $name already exists. Skipping...${NC}"
+    else
+        echo -e "${YELLOW}[*] Cloning $name...${NC}"
+        if git clone --depth=1 "$url" "$name" &>/dev/null; then
+            echo -e "${GREEN}[+] Successfully cloned $name${NC}"
+        else
+            echo -e "${RED}[x] Failed to clone $name from $url${NC}"
+        fi
+    fi
+}
+
+# ---------- INSTALL EACH ----------
+for repo in "${!repos[@]}"; do
+    install_repo "$repo" "${repos[$repo]}"
+done
+
+# ---------- SPECIAL CASE: GIST ----------
+GIST_DIR="$WORDLIST_DIR/gists"
+GIST_URL="https://gist.github.com/b80ea67d85c13206125806f0828f4d10.git"
+
+echo -e "${BLUE}[*] Handling special Gist (content_discovery_all.txt)...${NC}"
+mkdir -p "$GIST_DIR"
+
+if [ -d "$GIST_DIR/content_discovery_all" ]; then
+    echo -e "${GREEN}[+] Gist already cloned. Skipping...${NC}"
+else
+    echo -e "${YELLOW}[*] Cloning Gist...${NC}"
+    if git clone "$GIST_URL" "$GIST_DIR/content_discovery_all" &>/dev/null; then
+        echo -e "${GREEN}[+] Gist cloned successfully${NC}"
+    else
+        echo -e "${RED}[x] Failed to clone Gist${NC}"
+    fi
+fi
+
+# ---------- CLEANUP & SUMMARY ----------
+echo -e "\n${BLUE}========== INSTALLATION SUMMARY ==========${NC}"
+ls -1 "$WORDLIST_DIR"
+echo -e "${GREEN}[✔] All wordlists checked and installed (if missing).${NC}"
+echo -e "${YELLOW}[!] You can explore them at: $WORDLIST_DIR${NC}"
 echo -e "${GREEN}🎉 All tasks complete!${NC}"
