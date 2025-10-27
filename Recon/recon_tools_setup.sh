@@ -13,6 +13,19 @@ if [[ $EUID -ne 0 ]]; then
   exit 1
 fi
 
+# Function to install golang-go
+if ! command -v go &> /dev/null; then
+	echo -e "${YELLOW}🔧 Installing Golang-Go...${NC}"
+	sudo apt install golang-go -y &> /dev/null
+	if command -v "go" &> /dev/null; then
+	       echo -e "${GREEN}✅ Golang-Go Installed!${NC}"
+       else
+		echo -e "${RED}❌ Failed to install Golang-Go${NC}"
+	fi
+else
+	echo -e "${GREEN}✅ Golang-Go already installed!${NC}"
+fi
+
 # Function to install tool
 check_and_install() {
   tool=$1
@@ -31,7 +44,6 @@ check_and_install() {
 
 # Tools list
 tools=(
-  golang-go
   dnsrecon
   theHarvester
   subfinder
@@ -383,4 +395,3 @@ echo "[✔] GF Installed successfully with patterns."
 pipx install uro
 pipx ensurepath
 echo -e "${GREEN}🎉 All tasks complete!${NC}"
-
